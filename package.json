@@ -1,8 +1,8 @@
 {
-  "name": "schema-validator",
-  "version": "0.0.1",
+  "name": "nodejs-schema-validator",
+  "version": "0.0.2",
   "description": "NodeJS validation using schemas",
-  "main": "index.js",
+  "main": "./src/schema-validator.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
