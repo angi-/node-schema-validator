@@ -1,0 +1,32 @@
+{
+  "name": "schema-validator",
+  "version": "0.0.1",
+  "description": "NodeJS validation using schemas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/angi-/node-schema-validator.git"
+  },
+  "keywords": [
+    "NodeJS",
+    "validator",
+    "api",
+    "schema"
+  ],
+  "author": "Angelin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/angi-/node-schema-validator/issues"
+  },
+  "homepage": "https://github.com/angi-/node-schema-validator#readme",
+  "dependencies": {
+    "validator": "^13.7.0"
+  },
+  "devDependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  }
+}
