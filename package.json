@@ -1,6 +1,6 @@
 {
   "name": "nodejs-schema-validator",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "NodeJS validation using schemas",
   "main": "./src/schema-validator.js",
   "scripts": {
