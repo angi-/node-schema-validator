@@ -9,7 +9,7 @@ This library allows you to use any validation library, even your own. Examples a
 ## Quick example
 This validates a post request
 
-```
+```js
 const { bodySchemaValidator } = require('nodejs-schema-validator');
 const validator = require('validator');
 
@@ -56,7 +56,7 @@ router.put(
 ## Parameter validation
 You can also validate route parameters
 
-```
+```js
 const { paramSchemaValidator } = require('nodejs-schema-validator');
 
 const userParamSchema = {
@@ -78,7 +78,7 @@ router.get(
 ```
 
 Validation failure returns status code 422 with a body in this format:
-```
+```js
 {
     "message": [
         {
@@ -92,7 +92,7 @@ Validation failure returns status code 422 with a body in this format:
 ## Custom validation output
 In case you want to customize the output and status code of the failure you can pass a function as the second parameter to the middleware. It can be passed to both `paramSchemaValidator` and `bodySchemaValidator`.
 
-```
+```js
 const myCustomValidationOutput = (req, res, errors) => {
     res.status(422).json({ message: errors });
 }
