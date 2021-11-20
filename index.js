@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const schemaValidator = require('./src/schema-validator');
+const validator = require('validator');
 
+const { paramSchemaValidator, bodySchemaValidator } = require('./src/schema-validator');
 
 const app = express();
 app.use(express.json());
@@ -16,8 +17,8 @@ const paramSchema = {
     id: {
         rules: [
             {
-                rule: (str) => !schemaValidator.validator.isAlpha(str),
-                message: 'ID should be a string'
+                rule: (str) => !validator.isUUID(str, 4),
+                message: 'ID should be a valid v4 UUID'
             }
         ]
     }
@@ -27,7 +28,7 @@ const bodySchema = {
     name: {
         rules: [
             {
-                rule: (str) => !str || schemaValidator.validator.isEmpty(str),
+                rule: (str) => !str || validator.isEmpty(str),
                 message: 'Name is required'
             }
         ]
@@ -36,8 +37,8 @@ const bodySchema = {
 
 const router = new express.Router();
 router.post('/update/test/:id',
-    schemaValidator.validateParamSchema(paramSchema),
-    schemaValidator.validateBodySchema(bodySchema),
+    paramSchemaValidator(paramSchema),
+    bodySchemaValidator(bodySchema),
     (req, res) => {
         res.status(200).json({ message: 'SUCCESS' });
     }
