@@ -1,7 +1,4 @@
 # node-schema-validator
-
-[![NPM version][npm-image]][npm-url]
-
 NodeJS validation middleware for express router using schemas for both body and url parameters.
 
 This library allows you to use any validation library, even your own. Examples are using [validator](https://github.com/validatorjs/validator.js)
