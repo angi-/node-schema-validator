@@ -1,6 +1,7 @@
 # nodejs-schema-validator
 
 [![version](https://img.shields.io/npm/v/nodejs-schema-validator.svg?color=green)](http://npm.im/nodejs-schema-validator)
+[![CircleCI](https://circleci.com/gh/angi-/node-schema-validator/tree/main.svg?style=svg)](https://circleci.com/gh/angi-/node-schema-validator/tree/main)
 [![MIT License](https://img.shields.io/npm/l/nodejs-schema-validator.svg)](http://opensource.org/licenses/MIT)
 
 NodeJS validation middleware for express router using schemas for both body and url parameters.
