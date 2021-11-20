@@ -1,6 +1,7 @@
 # nodejs-schema-validator
 
 [![version](https://img.shields.io/npm/v/nodejs-schema-validator.svg?color=green)](http://npm.im/nodejs-schema-validator)
+[![travis build](https://img.shields.io/travis/angi-/nodejs-schema-validator.svg)](https://travis-ci.org/angi-/nodejs-schema-validator)
 [![MIT License](https://img.shields.io/npm/l/nodejs-schema-validator.svg)](http://opensource.org/licenses/MIT)
 
 NodeJS validation middleware for express router using schemas for both body and url parameters.
