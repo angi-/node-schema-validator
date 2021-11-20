@@ -49,31 +49,32 @@ const processSchema = async (schema, dataSource) => {
  */
 const defaultFailCallback = (req, res, errors) => res.status(422).json({ message: errors });
 
-/**
- * Validates a schema based on a targer object
- * Calls next() on success, failCallback() on failure
- * 
- * @param {Object} schema           Schema onject
- * @param {Object} targetObject     Target object (request ot response)
- * @param {Function} failCallback   Function to be called on failure
- * @returns {Function}              Middleware function
- */
-const schemaValidator = async (req, res, next, schema, targetObject, failCallback) => {
-    const errors = await processSchema(schema, targetObject);
-
-    if (errors.length === 0) {
-        return next();
-    }
-
-    if (!failCallback) {
-        failCallback = defaultFailCallback;
-    }
-
-    failCallback(req, res, errors);
-};
-
 module.exports = {
     /**
+     * Validates a schema based on a targer object
+     * Calls next() on success, failCallback() on failure
+     * 
+     * @param {Object} schema           Schema onject
+     * @param {Object} targetObject     Target object (request ot response)
+     * @param {Function} failCallback   Function to be called on failure
+     * @returns {Function}              Middleware function
+     */
+    schemaValidator: async (req, res, next, schema, targetObject, failCallback) => {
+        const errors = await processSchema(schema, targetObject);
+
+        if (errors.length === 0) {
+            return next();
+        }
+
+        if (!failCallback) {
+            failCallback = defaultFailCallback;
+        }
+
+        failCallback(req, res, errors);
+    },
+
+    /**
+     * Validates a schema based on req.body
      * 
      * @param {Object} schema           Validation schema
      * @param {Function} failCallback   Failure callback function (optional)
@@ -84,6 +85,7 @@ module.exports = {
     },
 
     /**
+     * Validates a schema based on req.params
      * 
      * @param {Object} schema           Validation schema
      * @param {Function} failCallback   Failure callback function (optional)
