@@ -14,7 +14,7 @@ const schema = {
         optional: true,
         rules: [
             {
-                rule: (str) => str,
+                rule: (str) => !str,
                 message: 'Should not reach here'
             }
         ]
