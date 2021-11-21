@@ -1,10 +1,10 @@
 {
   "name": "nodejs-schema-validator",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "NodeJS validation using schemas",
   "main": "./src/schema-validator.js",
   "scripts": {
-    "test": "mocha src/tests/schema-validator.test.js"
+    "test": "mocha tests/schema-validator.test.js"
   },
   "repository": {
     "type": "git",
