@@ -1,4 +1,21 @@
 /**
+ * Injects values in message
+ * 
+ * @param {Object} vars 
+ * @param {String} message 
+ * @returns {String} 
+ */
+const injectVarsInMessage = (vars, message) => {
+    const keys = Object.keys(vars);
+    
+    keys.forEach(key => {
+        message = message.replace('{{' + key + '}}', vars[key]);
+    });
+
+    return message;
+};
+
+/**
  * Processes schema rules by passing a data source
  * 
  * @param {Object} schema 
@@ -23,13 +40,13 @@ const processSchema = async (schema, dataSource) => {
 
         if (!optionalValidation) {
             for (const rule of schema[key].rules) {
-                const ruleOutcome = await rule.rule(inputValue);
+                const ruleOutcome = await rule.rule(inputValue, dataSource);
 
                 if (!foundError && ruleOutcome === true) {
                     foundError = true;
                     errors.push({
                         field: key,
-                        message: rule.message
+                        message: injectVarsInMessage(dataSource, rule.message)
                     });
                 }
             }
@@ -70,7 +87,7 @@ module.exports = {
             failCallback = defaultFailCallback;
         }
 
-        failCallback(req, res, errors);
+        return failCallback(req, res, errors);
     },
 
     /**
@@ -81,7 +98,7 @@ module.exports = {
      * @returns {Function}              Middleware function
      */
     bodySchemaValidator: (schema, failCallback) => {
-        return async (req, res, next) => await schemaValidator(req, res, next, schema, req.body, failCallback);
+        return async (req, res, next) => await module.exports.schemaValidator(req, res, next, schema, req.body, failCallback);
     },
 
     /**
@@ -92,6 +109,6 @@ module.exports = {
      * @returns {Function}              Middleware function
      */
     paramSchemaValidator: (schema, failCallback) => {
-        return async (req, res, next) => schemaValidator(req, res, next, schema, req.params, failCallback);
+        return async (req, res, next) => await module.exports.schemaValidator(req, res, next, schema, req.params, failCallback);
     }
 }
