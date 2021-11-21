@@ -12,24 +12,49 @@ This library allows you to use any validation library, even your own. Examples a
 > npm i nodejs-schema-validator
 
 ## Quick example
-This validates a post request
-
+This validates a post request by looking into `req.body` for email value.
 ```js
 const { bodySchemaValidator } = require('nodejs-schema-validator');
 const validator = require('validator');
 
-// Schema is an object containing the fields we want to validate
-const userBodySchema = {
+const userEmailSchema = {
+    email: {
+        rules: [
+            {
+                rule: (input) => !input || validator.isEmpty('input'),
+                message: 'Email address is required'
+            },
+            {
+                rule: (input) => !validator.isEmail(input),
+                message: 'This is not a valid email address'
+            }
+        ]
+    }
+};
+
+// Add body schema validator as a middleware to your router endpoints
+router.post(
+    '/user/:id',
+    bodySchemaValidator(userEmailSchema),
+    (req, res) => { /* Your logic */ }
+);
+```
+
+Here's a breakdown of how the schema is structured:
+
+```js
+// Schema is an object containing the fields we want to validate from req.body
+const schemaExample = {
     name: {
         // A field can have multiple rules
         rules: [
             // A rule contains the validation function and a message for failure
             {
-                rule: (str) => !str || validator.isEmpty(str),
+                rule: (input) => !input || validator.isEmpty(input),
                 message: 'Name is required'
             },
             {
-                rule: (str) => !validator.isLength(3, 20),
+                rule: (input) => !validator.isLength(3, 20),
                 message: 'Name should have a length between 3 and 20 characters'
             }
         ]
@@ -38,49 +63,47 @@ const userBodySchema = {
         // Some fields can be optional
         optional: true,
         rules: [
-            rule: (str) => !validator.isBtcAddress(str),
+            rule: (input) => !validator.isBtcAddress(input),
             message: 'This is not a valid Bitcoin address'
         ]
     }
 }
-
-// Add body schema validator as a middleware to your router endpoints
-router.post(
-    '/user/',
-    bodySchemaValidator(userBodySchema),
-    (req, res) => { /* Your logic */ }
-);
-
-router.put(
-    '/user/:id',
-    bodySchemaValidator(userBodySchema),
-    (req, res) => { /* Your logic */ }
-)
 ```
-
-## Parameter validation
-You can also validate route parameters
+## Validating both body and parameters
+Example of how to validate both body and url parameters
 
 ```js
-const { paramSchemaValidator } = require('nodejs-schema-validator');
+const { bodySchemaValidator, paramSchemaValidator } = require('nodejs-schema-validator');
+const validator = require('validator');
 
+// Schema for validating id as a valid UUID v4
 const userParamSchema = {
     id: {
         rules: [
             {
-                rule: (str) => !validator.isUUID(str, 4),
+                rule: (input) => !validator.isUUID(input, 4),
                 message: 'User ID should be a valid v4 UUID'
             }
         ]
     }
 }
 
-router.get(
+// This validates user data
+router.post(
+    '/user/',
+    bodySchemaValidator(userBodySchema),
+    (req, res) => { /* Your logic */ }
+);
+
+// This validates both user id and user data
+router.put(
     '/user/:id',
     paramSchemaValidator(userParamSchema),
+    bodySchemaValidator(userBodySchema),
     (req, res) => { /* Your logic */ }
 )
 ```
+
 
 Validation failure returns status code 422 with a body in this format:
 ```js
@@ -109,8 +132,70 @@ router.post(
 )
 ```
 
+## Using field values in messages
+```js
+const schema = {
+    amount: {
+        rules: [
+            {
+                rule: async (input) => amount < 100,
+                message: 'You entered {{amount}} but should be at least 100'
+            }
+        ]
+    }
+};
+```
+
+## Validating with async/await
+Schema rules support async methods. Here's an example:
+
+```js
+const schema = {
+    email: {
+        rules: [
+            {
+                rule: async (input) => await emailExists(),
+                message: 'Email address {{email}} already exists'
+            }
+        ]
+    }
+};
+
+```
+
+## Cross field validation
+Validation rules can depend on other values:
+```js
+const schema = {
+    min: {
+        rules: [
+            {
+                rule: (input) => !input,
+                message: 'Min is required'
+            }
+        ]
+    },
+    max: {
+        rules: [
+            {
+                rule: (input) => !input,
+                message: 'Max is required'
+            }
+        ]
+    },
+    value: {
+        rules: [
+            {
+                rule: (input, { min, max }) => input < min || input > max,
+                message: 'This field must be between {{min}} and {{max}}'
+            }
+        ]
+    }
+};
+```
+
 ## Contributing
-Allowing pull requests
+Allowing pull requests.
 
 ## License (MIT)
 

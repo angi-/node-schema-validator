@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const validator = require('validator');
+const emailExists = require('./src/tests/email-exists');
 
 const { paramSchemaValidator, bodySchemaValidator } = require('./src/schema-validator');
 
@@ -17,7 +18,7 @@ const paramSchema = {
     id: {
         rules: [
             {
-                rule: (str) => !validator.isUUID(str, 4),
+                rule: (input) => !validator.isUUID(input, 4),
                 message: 'ID should be a valid v4 UUID'
             }
         ]
@@ -28,8 +29,20 @@ const bodySchema = {
     name: {
         rules: [
             {
-                rule: (str) => !str || validator.isEmpty(str),
+                rule: (input) => !input || validator.isEmpty(input),
                 message: 'Name is required'
+            }
+        ]
+    },
+    email: {
+        rules: [
+            {
+                rule: (input) => !input || validator.isEmpty(input),
+                message: 'Email is required'
+            },
+            {
+                rule: async (input) => await emailExists(input),
+                message: 'This email address already exists'
             }
         ]
     }

@@ -4,7 +4,7 @@
   "description": "NodeJS validation using schemas",
   "main": "./src/schema-validator.js",
   "scripts": {
-    "test": "mocha src/schema-validator.test.js"
+    "test": "mocha src/tests/schema-validator.test.js"
   },
   "repository": {
     "type": "git",
@@ -13,11 +13,13 @@
   "keywords": [
     "NodeJS",
     "validator",
-    "api",
+    "express",
+    "middleware",
+    "API",
     "schema"
   ],
   "author": "Angelin",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/angi-/node-schema-validator/issues"
   },
