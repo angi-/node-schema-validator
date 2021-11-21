@@ -12,24 +12,22 @@
   },
   "keywords": [
     "NodeJS",
-    "validator",
+    "validation",
     "express",
     "middleware",
     "API",
     "schema"
   ],
-  "author": "Angelin",
+  "author": "Angelin Sirbu",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/angi-/node-schema-validator/issues"
   },
   "homepage": "https://github.com/angi-/node-schema-validator#readme",
-  "dependencies": {
-    "validator": "^13.7.0"
-  },
   "devDependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "mocha": "^9.1.3"
+    "mocha": "^9.1.3",
+    "validator": "^13.7.0"
   }
 }
