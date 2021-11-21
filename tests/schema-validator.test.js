@@ -1,4 +1,4 @@
-const { schemaValidator } = require('../schema-validator');
+const { schemaValidator } = require('../src//schema-validator');
 const assert = require('assert');
 
 const requiredOptionalSchema = require('./schemas/required-optional-schema');
