@@ -4,6 +4,7 @@ const assert = require('assert');
 const requiredOptionalSchema = require('./schemas/required-optional-schema');
 const emailSchema = require('./schemas/email-schema');
 const minMaxSchema = require('./schemas/min-max-schema');
+const sanitizedSchema = require('./schemas/sanitized-schema');
 
 const mocks = {
     req: {},
@@ -87,6 +88,14 @@ describe('Schema validator middleware', () => {
 
         return schemaValidator(mocks.req, mocks.res, mocks.next, minMaxSchema, body, failFunction).then((validationErrors) => {
             assert.notEqual(typeof validationErrors, 'undefined');
+        });
+    });
+
+    it('Should sanitize input', () => {
+        body = { name: 'ELON MUSK' };
+
+        return schemaValidator(mocks.res, mocks.res, mocks.next, sanitizedSchema, body, failFunction).then((validationErrors) => {
+            assert.equal(body.name, 'ksum nole');
         });
     });
 });

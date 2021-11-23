@@ -40,6 +40,10 @@ const processSchema = async (schema, dataSource) => {
 
         if (!optionalValidation) {
             for (const rule of schema[key].rules) {
+                if (typeof rule.rule !== 'function') {
+                    throw new Error('Rules need to be functions.');
+                }
+
                 const ruleOutcome = await rule.rule(inputValue, dataSource);
 
                 if (!foundError && ruleOutcome === true) {
@@ -49,6 +53,17 @@ const processSchema = async (schema, dataSource) => {
                         message: injectVarsInMessage(dataSource, rule.message)
                     });
                 }
+            }
+        }
+
+        if (schema[key].hasOwnProperty('sanitizers')) {
+            for (const sanitizerFunction of schema[key].sanitizers) {
+                if (typeof sanitizerFunction !== 'function') {
+                    throw new Error('Sanitizers need to be functions.');
+                }
+
+                console.log(dataSource[key], sanitizerFunction)
+                dataSource[key] = sanitizerFunction(dataSource[key]);
             }
         }
     }

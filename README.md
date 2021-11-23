@@ -18,7 +18,8 @@ This library allows you to use any validation library, even your own. Examples a
 7. [Using field values in messages](#using-field-values-in-messages)
 8. [Async/await validation](#asyncawait-validation)
 9. [Cross field validation](#cross-field-validation)
-10. [Contributing](#contributing)
+10. [Using sanitizers](#using-sanitizers)
+11. [Contributing](#contributing)
 
 ## Installation
 > npm i nodejs-schema-validator
@@ -223,6 +224,37 @@ const schema = {
 };
 ```
 
+## Using sanitizers
+You can add an array of sanitizers that will be processed after validation:
+```js
+const lowercaseSanitizer = (input) => input.toLowerCase();
+const reverseSanitizer = (input) => input.split('').reverse().join('');
+
+const schema = {
+    name: {
+        rules: [
+            {
+                rule: async (input) => !input,
+                message: 'Name is required'
+            }
+        ],
+        sanitizers: [
+            lowercaseSanitizer,
+            reverseSanitizer
+        ]
+    }
+};
+```
+
+Example payload:
+```js
+{ name: 'ELON MUSK' }
+```
+
+Sanitized output:
+```js
+{ name: 'ksum nole' }
+```
 ## Contributing
 Allowing pull requests.
 
