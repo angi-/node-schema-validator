@@ -9,14 +9,16 @@ NodeJS validation middleware for express router using schemas for both body and 
 This library allows you to use any validation library, even your own. Examples are using [validator](https://github.com/validatorjs/validator.js)
 
 # Table of contents
-1. [Installation and usage](#installation)
+1. [Installation](#installation)
 2. [Quick example](#quick-example)
-3. [Validating both body and parameters](#validating-both-body-and-parameters)
-4. [Custom validation output](#custom-validation-output)
-5. [Using field values in messages](#using-field-values-in-messages)
-6. [Async/await validation](#asyncawait-validation)
-7. [Cross field validation](#cross-field-validation)
-8. [Contributing](#contributing)
+3. [Schema structure](#schema-structure)
+4. [Optional fields](#optional-fields)
+5. [Validating both body and parameters](#validating-both-body-and-parameters)
+6. [Validation output](#validation-output)
+7. [Using field values in messages](#using-field-values-in-messages)
+8. [Async/await validation](#asyncawait-validation)
+9. [Cross field validation](#cross-field-validation)
+10. [Contributing](#contributing)
 
 ## Installation
 > npm i nodejs-schema-validator
@@ -50,6 +52,7 @@ router.post(
 );
 ```
 
+## Schema structure
 Here's a breakdown of how the schema is structured:
 
 ```js
@@ -79,6 +82,22 @@ const schemaExample = {
     }
 }
 ```
+
+## Optional fields
+Marking fields as optional will validate only when they are not empty.
+```js
+const schema = {
+    vatNo: {
+        // Some fields can be optional
+        optional: true,
+        rules: [
+            rule: (input) => !validator.isValidVatNo(input),
+            message: 'Please insert a valid VAT number of leave empty'
+        ]
+    }
+}
+```
+
 ## Validating both body and parameters
 Example of how to validate both body and url parameters
 
@@ -114,7 +133,7 @@ router.put(
 )
 ```
 
-
+## Validation output
 Validation failure returns status code 422 with a body in this format:
 ```js
 {
@@ -127,7 +146,6 @@ Validation failure returns status code 422 with a body in this format:
 }
 ```
 
-## Custom validation output
 In case you want to customize the output and status code of the failure you can pass a function as the second parameter to the middleware. It can be passed to both `paramSchemaValidator` and `bodySchemaValidator`.
 
 ```js
@@ -143,6 +161,7 @@ router.post(
 ```
 
 ## Using field values in messages
+Field names wrapped in double curly braces will be replaced with their values. **Please note that there should be no space between the field name and the braces**.
 ```js
 const schema = {
     amount: {
