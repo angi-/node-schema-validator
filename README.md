@@ -8,7 +8,17 @@ NodeJS validation middleware for express router using schemas for both body and 
 
 This library allows you to use any validation library, even your own. Examples are using [validator](https://github.com/validatorjs/validator.js)
 
-# Installation and usage
+# Table of contents
+1. [Installation and usage](#installation)
+2. [Quick example](#quick-example)
+3. [Validating both body and parameters](#validating-both-body-and-parameters)
+4. [Custom validation output](#custom-validation-output)
+5. [Using field values in messages](#using-field-values-in-messages)
+6. [Async/await validation](#asyncawait-validation)
+7. [Cross field validation](#cross-field-validation)
+8. [Contributing](#contributing)
+
+## Installation
 > npm i nodejs-schema-validator
 
 ## Quick example
@@ -146,7 +156,7 @@ const schema = {
 };
 ```
 
-## Validating with async/await
+## Async/await validation
 Schema rules support async methods. Here's an example:
 
 ```js
@@ -154,7 +164,7 @@ const schema = {
     email: {
         rules: [
             {
-                rule: async (input) => await emailExists(),
+                rule: async (input) => await emailExists(input),
                 message: 'Email address {{email}} already exists'
             }
         ]
