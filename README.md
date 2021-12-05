@@ -10,26 +10,34 @@ This library allows you to use any validation library, even your own. Examples a
 
 # Table of contents
 1. [Installation](#installation)
-2. [Quick example](#quick-example)
+2. [Basic usage](#basic-usage)
 3. [Schema structure](#schema-structure)
 4. [Optional fields](#optional-fields)
 5. [Validating both body and parameters](#validating-both-body-and-parameters)
-6. [Validation output](#validation-output)
+6. [Custom validation output](#custom-validation-output)
 7. [Using field values in messages](#using-field-values-in-messages)
 8. [Async/await validation](#asyncawait-validation)
 9. [Cross field validation](#cross-field-validation)
-10. [Using sanitizers](#using-sanitizers)
-11. [Contributing](#contributing)
+10. [Conditional validation](#conditional-validation)
+11. [Using sanitizers](#using-sanitizers)
+12. [Contributing](#contributing)
 
 ## Installation
 > npm i nodejs-schema-validator
 
-## Quick example
+## Basic usage
 This validates a post request by looking into `req.body` for email value.
 ```js
-const { bodySchemaValidator } = require('nodejs-schema-validator');
+// Import SchemaValidator
+const SchemaValidator = require('nodejs-schema-validator');
+
+// Import a validator library of your choice
 const validator = require('validator');
 
+// Create a new schema validator instance
+const schemaValidatorInstance = new SchemaValidator();
+
+// Define your schema (or import it from a dedicated file)
 const userEmailSchema = {
     email: {
         rules: [
@@ -48,8 +56,8 @@ const userEmailSchema = {
 // Add body schema validator as a middleware to your router endpoints
 router.post(
     '/user/:id',
-    bodySchemaValidator(userEmailSchema),
-    (req, res) => { /* Your logic */ }
+    schemaValidatorInstance.validateBody(userEmailSchema),
+    (req, res) => { /* Data is valid, add your logic */ }
 );
 ```
 
@@ -81,7 +89,7 @@ const schemaExample = {
             message: 'This is not a valid Bitcoin address'
         ]
     }
-}
+};
 ```
 
 ## Optional fields
@@ -96,16 +104,13 @@ const schema = {
             message: 'Please insert a valid VAT number of leave empty'
         ]
     }
-}
+};
 ```
 
 ## Validating both body and parameters
 Example of how to validate both body and url parameters
 
 ```js
-const { bodySchemaValidator, paramSchemaValidator } = require('nodejs-schema-validator');
-const validator = require('validator');
-
 // Schema for validating id as a valid UUID v4
 const userParamSchema = {
     id: {
@@ -116,25 +121,36 @@ const userParamSchema = {
             }
         ]
     }
-}
+};
+
+const userBodySchema = {
+    name: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'User name is mandatory'
+            }
+        ]
+    }
+};
 
 // This validates user data
 router.post(
     '/user/',
-    bodySchemaValidator(userBodySchema),
+    schemaValidatorInstance.validateBody(userBodySchema),
     (req, res) => { /* Your logic */ }
 );
 
 // This validates both user id and user data
 router.put(
     '/user/:id',
-    paramSchemaValidator(userParamSchema),
-    bodySchemaValidator(userBodySchema),
+    schemaValidatorInstance.validateParams(userParamSchema),
+    schemaValidatorInstance.validateBody(userBodySchema),
     (req, res) => { /* Your logic */ }
 )
 ```
 
-## Validation output
+## Custom validation output
 Validation failure returns status code 422 with a body in this format:
 ```js
 {
@@ -147,18 +163,16 @@ Validation failure returns status code 422 with a body in this format:
 }
 ```
 
-In case you want to customize the output and status code of the failure you can pass a function as the second parameter to the middleware. It can be passed to both `paramSchemaValidator` and `bodySchemaValidator`.
+In case you want to customize the output and status code of the failure you can pass a function in the `SchemaValidator` constructor:
 
 ```js
+// Define your function in this format
 const myCustomValidationOutput = (req, res, errors) => {
     res.status(422).json({ message: errors });
-}
+};
 
-router.post(
-    '/user/',
-    bodySchemaValidator(userBodySchema, myCustomValidationOutput),
-    (req, res) => { /* Your logic */ }
-)
+// Pass it in constructor
+const schemaValidatorInstance = new SchemaValidator(myCustomValidationOutput);
 ```
 
 ## Using field values in messages
@@ -224,6 +238,42 @@ const schema = {
 };
 ```
 
+## Conditional validation
+Some fields can have validation skipped based on conditions. Rules can have a `when` condition that skips the rule in case it returns `false`.
+
+```js
+const schema = {
+     type: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'Type is required'
+            }
+        ]
+    },
+    resolution: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'Resolution is required',
+                // Only validate this rule when type is 'monitor'
+                when: ({ type }) => type === 'monitor'
+            }
+        ]
+    },
+    watts: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'Power in watts is required',
+                // Only validate this tule when type is 'speaker'
+                when: ({ type }) => type === 'speaker'
+            }
+        ]
+    }
+}
+```
+
 ## Using sanitizers
 You can add an array of sanitizers that will be processed after validation:
 ```js
@@ -256,7 +306,10 @@ Sanitized output:
 { name: 'ksum nole' }
 ```
 ## Contributing
-Allowing pull requests.
+Pull requests are welcome. Run tests with:
+```console
+npm run test
+```
 
 ## License (MIT)
 

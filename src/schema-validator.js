@@ -3,6 +3,7 @@
  * 
  * @param {Object} vars 
  * @param {String} message 
+ * 
  * @returns {String} 
  */
 const injectVarsInMessage = (vars, message) => {
@@ -16,114 +17,169 @@ const injectVarsInMessage = (vars, message) => {
 };
 
 /**
- * Processes schema rules by passing a data source
+ * Checks if a schema field has optional validation
  * 
  * @param {Object} schema 
  * @param {Object} dataSource 
- * @returns {Promise<boolean>}
+ * @param {String} key 
+ * 
+ * @returns {Boolean}
  */
-const processSchema = async (schema, dataSource) => {
-    const errors = [];
-    let foundError = false;
-    const schemaKeys = Object.keys(schema);
+const isOptionalValidation = (schema, dataSource, key) => {
+    return schema[key].hasOwnProperty('optional') && schema[key].optional && (
+        !dataSource.hasOwnProperty(key) ||
+        dataSource[key] === '' ||
+        dataSource[key] === null ||
+        dataSource[key] === undefined
+    );
+};
 
-    for (const key of schemaKeys) {
-        const inputValue = dataSource.hasOwnProperty(key) ? dataSource[key] : '';
-        foundError = false;
+/**
+ * Checks if rule validation should be skipped
+ * 
+ * @param {Function} rule 
+ * @param {Object} targetObject 
+ * 
+ * @returns {Boolean}
+ */
+const shouldSkipRuleValidation = (rule, targetObject) => {
+    return rule.hasOwnProperty('when') && typeof rule.when === 'function' && rule.when(targetObject) === false;
+};
 
-        const optionalValidation = schema[key].hasOwnProperty('optional') && schema[key].optional && (
-            !dataSource.hasOwnProperty(key) ||
-            dataSource[key] === '' ||
-            dataSource[key] === null ||
-            dataSource[key] === undefined
-        );
-
-        if (!optionalValidation) {
-            for (const rule of schema[key].rules) {
-                if (typeof rule.rule !== 'function') {
-                    throw new Error('Rules need to be functions.');
-                }
-
-                const ruleOutcome = await rule.rule(inputValue, dataSource);
-
-                if (!foundError && ruleOutcome === true) {
-                    foundError = true;
-                    errors.push({
-                        field: key,
-                        message: injectVarsInMessage(dataSource, rule.message)
-                    });
-                }
-            }
-        }
-
-        if (schema[key].hasOwnProperty('sanitizers')) {
-            for (const sanitizerFunction of schema[key].sanitizers) {
-                if (typeof sanitizerFunction !== 'function') {
-                    throw new Error('Sanitizers need to be functions.');
-                }
-
-                console.log(dataSource[key], sanitizerFunction)
-                dataSource[key] = sanitizerFunction(dataSource[key]);
-            }
-        }
+/**
+ * Processes a validation rule
+ * 
+ * @param {SchemaValidator} context 
+ * @param {Function} rule 
+ * @param {String} field 
+ * @param {String} inputValue 
+ */
+const processRule = async (context, rule, field, inputValue) => {
+    if (typeof rule.rule !== 'function') {
+        throw new Error('Rules need to be functions.');
     }
 
-    return errors;
+    if (!shouldSkipRuleValidation(rule, context.targetObject)) {
+        const ruleOutcome = await rule.rule(inputValue, context.targetObject);
+
+        if (!context.foundError && ruleOutcome === true) {
+            context.foundError = true;
+
+            if (!rule.hasOwnProperty('message')) {
+                throw new Error('All rules must have a message');
+            }
+
+            context.addError(field, injectVarsInMessage(context.targetObject, rule.message));
+        }
+    }
 }
 
 /**
- * Default fail callback function
+ * Processes schema rules by passing a data source
  * 
- * @param {Object} req Request object
- * @param {Object} res Response object
- * @param {Object[]} errors Array containing the validation errors
- * @returns {Function}
+ * @param {SchemaValidator} context
+ * @param {String} fieldName
+ * 
+ * @returns {Promise}
  */
-const defaultFailCallback = (req, res, errors) => res.status(422).json({ message: errors });
+const processField = async (context, fieldName) => {
+    const inputValue = context.targetObject.hasOwnProperty(fieldName) ? context.targetObject[fieldName] : '';
+    context.foundError = false;
 
-module.exports = {
+    if (!isOptionalValidation(context.schema, context.targetObject, fieldName)) {
+        for (const rule of context.schema[fieldName].rules) {
+            await processRule(context, rule, fieldName, inputValue)
+        }
+    }
+
+    if (context.schema[fieldName].hasOwnProperty('sanitizers')) {
+        for (const sanitizerFunction of context.schema[fieldName].sanitizers) {
+            if (typeof sanitizerFunction !== 'function') {
+                throw new Error('Sanitizers need to be functions.');
+            }
+
+            context.targetObject[fieldName] = sanitizerFunction(context.targetObject[fieldName]);
+        }
+    }
+}
+
+class SchemaValidator {
+    /**
+     * @constructor
+     * @param {Function} failCallback 
+     */
+    constructor(failCallback) {
+        this.failCallback = failCallback || this.defaultFailCallback;
+    }
+
+    /**
+     * Default fail callback function
+     * 
+     * @param {Object}   req        Request object
+     * @param {Object}   res        Response object
+     * @param {Object[]} errors     Array containing the validation errors
+     * 
+     * @returns {Function}
+     */
+    defaultFailCallback = (req, res, errors) => res.status(422).json({ message: errors });
+
     /**
      * Validates a schema based on a targer object
      * Calls next() on success, failCallback() on failure
      * 
-     * @param {Object} schema           Schema onject
-     * @param {Object} targetObject     Target object (request ot response)
-     * @param {Function} failCallback   Function to be called on failure
-     * @returns {Function}              Middleware function
+     * @param {Object}   req            Request object
+     * @param {Object}   res            Response object
+     * @param {Function} next           Function to be called on success
+     * @param {Object}   targetObject   Object to be validated
+     * 
+     * @returns {Function}
      */
-    schemaValidator: async (req, res, next, schema, targetObject, failCallback) => {
-        const errors = await processSchema(schema, targetObject);
+    async runValidationMiddleware(req, res, next, schema, targetObject) {
+        this.errors = [];
+        this.foundError = false;
+        this.schema = schema;
+        this.targetObject = targetObject;
 
-        if (errors.length === 0) {
+        for (const fieldName of Object.keys(this.schema)) {
+            await processField(this, fieldName);
+        }
+
+        if (this.errors.length === 0) {
             return next();
         }
 
-        if (!failCallback) {
-            failCallback = defaultFailCallback;
-        }
+        return this.failCallback(req, res, this.errors);
+    };
 
-        return failCallback(req, res, errors);
-    },
+    /**
+     * Adds field error in errors list
+     * 
+     * @param {String} field 
+     * @param {String} message 
+     */
+    addError (field, message) {
+        this.errors.push({ field, message });
+    };
 
     /**
      * Validates a schema based on req.body
      * 
-     * @param {Object} schema           Validation schema
-     * @param {Function} failCallback   Failure callback function (optional)
-     * @returns {Function}              Middleware function
+     * @param {Object} schema   Validation schema
+     * @returns {Function}      Middleware function
      */
-    bodySchemaValidator: (schema, failCallback) => {
-        return async (req, res, next) => await module.exports.schemaValidator(req, res, next, schema, req.body, failCallback);
-    },
+    validateBody(schema) {
+        return async (req, res, next) => await this.runValidationMiddleware(req, res, next, schema, req.body);
+    };
 
     /**
      * Validates a schema based on req.params
      * 
-     * @param {Object} schema           Validation schema
-     * @param {Function} failCallback   Failure callback function (optional)
-     * @returns {Function}              Middleware function
+     * @param {Object} schema   Validation schema
+     * @returns {Function}      Middleware function
      */
-    paramSchemaValidator: (schema, failCallback) => {
-        return async (req, res, next) => await module.exports.schemaValidator(req, res, next, schema, req.params, failCallback);
+    validateParams(schema) {
+        return async (req, res, next) => await this.runValidationMiddleware(req, res, next, schema, req.params);
     }
 }
+
+module.exports = SchemaValidator;
