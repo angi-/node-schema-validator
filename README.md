@@ -18,8 +18,9 @@ This library allows you to use any validation library, even your own. Examples a
 7. [Using field values in messages](#using-field-values-in-messages)
 8. [Async/await validation](#asyncawait-validation)
 9. [Cross field validation](#cross-field-validation)
-10. [Using sanitizers](#using-sanitizers)
-11. [Contributing](#contributing)
+10. [Conditional validation](#conditional-validation)
+11. [Using sanitizers](#using-sanitizers)
+12. [Contributing](#contributing)
 
 ## Installation
 > npm i nodejs-schema-validator
@@ -224,6 +225,42 @@ const schema = {
 };
 ```
 
+## Conditional validation
+Some fields can have validation skipped based on conditions. Rules can have a `when` condition that skips the rule in case it returns `false`.
+
+```js
+const schema = {
+     type: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'Type is required'
+            }
+        ]
+    },
+    resolution: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'Resolution is required',
+                // Only validate this rule when type is 'monitor'
+                when: ({ type }) => type === 'monitor'
+            }
+        ]
+    },
+    watts: {
+        rules: [
+            {
+                rule: (input) => !input || input === '',
+                message: 'Power in watts is required',
+                // Only validate this tule when type is 'speaker'
+                when: ({ type }) => type === 'speaker'
+            }
+        ]
+    }
+}
+```
+
 ## Using sanitizers
 You can add an array of sanitizers that will be processed after validation:
 ```js
@@ -256,7 +293,10 @@ Sanitized output:
 { name: 'ksum nole' }
 ```
 ## Contributing
-Allowing pull requests.
+Pull requests are welcome. Run tests with:
+```console
+npm run test
+```
 
 ## License (MIT)
 

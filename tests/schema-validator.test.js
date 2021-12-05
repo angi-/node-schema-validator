@@ -5,6 +5,7 @@ const requiredOptionalSchema = require('./schemas/required-optional-schema');
 const emailSchema = require('./schemas/email-schema');
 const minMaxSchema = require('./schemas/min-max-schema');
 const sanitizedSchema = require('./schemas/sanitized-schema');
+const conditionalSchema = require('./schemas/conditional-schema');
 
 const mocks = {
     req: {},
@@ -94,8 +95,19 @@ describe('Schema validator middleware', () => {
     it('Should sanitize input', () => {
         body = { name: 'ELON MUSK' };
 
-        return schemaValidator(mocks.res, mocks.res, mocks.next, sanitizedSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator(mocks.req, mocks.res, mocks.next, sanitizedSchema, body, failFunction).then((validationErrors) => {
             assert.equal(body.name, 'ksum nole');
         });
+    });
+
+    it('Should take conditional rules into account', () => {
+        body = {
+            type: 'monitor',
+            resolution: '1080p'
+        }
+
+        return schemaValidator(mocks.req, mocks.res, mocks.next, conditionalSchema, body, failFunction).then((validationErrors) => {
+            assert.equal(typeof validationErrors, 'undefined');
+        })
     });
 });

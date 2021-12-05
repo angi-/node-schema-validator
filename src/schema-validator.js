@@ -44,14 +44,23 @@ const processSchema = async (schema, dataSource) => {
                     throw new Error('Rules need to be functions.');
                 }
 
-                const ruleOutcome = await rule.rule(inputValue, dataSource);
+                const skipRuleValidation = rule.hasOwnProperty('when') && typeof rule.when === 'function' && rule.when(dataSource) === false;
 
-                if (!foundError && ruleOutcome === true) {
-                    foundError = true;
-                    errors.push({
-                        field: key,
-                        message: injectVarsInMessage(dataSource, rule.message)
-                    });
+                if (!skipRuleValidation) {
+                    const ruleOutcome = await rule.rule(inputValue, dataSource);
+    
+                    if (!foundError && ruleOutcome === true) {
+                        foundError = true;
+    
+                        if (!rule.hasOwnProperty('message')) {
+                            throw new Error('All rules must have a message');
+                        }
+    
+                        errors.push({
+                            field: key,
+                            message: injectVarsInMessage(dataSource, rule.message)
+                        });
+                    }
                 }
             }
         }
@@ -62,7 +71,6 @@ const processSchema = async (schema, dataSource) => {
                     throw new Error('Sanitizers need to be functions.');
                 }
 
-                console.log(dataSource[key], sanitizerFunction)
                 dataSource[key] = sanitizerFunction(dataSource[key]);
             }
         }
