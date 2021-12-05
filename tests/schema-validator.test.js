@@ -1,13 +1,21 @@
-const { schemaValidator } = require('../src//schema-validator');
+const SchemaValidator = require('../src/schema-validator');
 const assert = require('assert');
 
+// Test schemas
 const requiredOptionalSchema = require('./schemas/required-optional-schema');
 const emailSchema = require('./schemas/email-schema');
 const minMaxSchema = require('./schemas/min-max-schema');
 const sanitizedSchema = require('./schemas/sanitized-schema');
 const conditionalSchema = require('./schemas/conditional-schema');
 
-const mocks = {
+// Custom fail function
+const failFunction = (req, res, errors) => errors;
+
+// Schema validator instance
+const schemaValidator = new SchemaValidator(failFunction);
+
+// Middleware req, res, next mock
+const mock = {
     req: {},
     res: {
         status: (code) => {
@@ -17,8 +25,6 @@ const mocks = {
     next: () => {}
 }
 
-const failFunction = (req, res, errors) => errors;
-
 describe('Schema validator middleware', () => {
     it('Should call next()', () => {
         let increment = 0;
@@ -27,13 +33,13 @@ describe('Schema validator middleware', () => {
         const schema = {};
         const body = {};
 
-        return schemaValidator(mocks.req, mocks.res, nextFunction, schema, body)
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, nextFunction, schema, body)
             .then(() => {
                 assert.equal(increment, 1);
             })
     });
 
-    let validatorResponse = schemaValidator(mocks.req, mocks.res, mocks.next, requiredOptionalSchema, {}, failFunction)
+    let validatorResponse = schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, requiredOptionalSchema, {}, failFunction)
 
     it('Should contain exactly one validation error', () => {
         return validatorResponse.then((validationErrors) => {
@@ -52,7 +58,7 @@ describe('Schema validator middleware', () => {
             email: 'exists@domain.com'
         }
 
-        return schemaValidator(mocks.req, mocks.res, mocks.next, emailSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, emailSchema, body, failFunction).then((validationErrors) => {
             assert.equal(validationErrors.length, 1);
         });
     });
@@ -62,7 +68,7 @@ describe('Schema validator middleware', () => {
             email: 'does-not-exist@domain.com'
         }
 
-        return schemaValidator(mocks.req, mocks.res, mocks.next, emailSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, emailSchema, body, failFunction).then((validationErrors) => {
             assert.equal(typeof validationErrors, 'undefined');
         });
     });
@@ -75,7 +81,7 @@ describe('Schema validator middleware', () => {
             value: 50
         }
 
-        return schemaValidator(mocks.req, mocks.res, mocks.next, minMaxSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, minMaxSchema, body, failFunction).then((validationErrors) => {
             assert.equal(typeof validationErrors, 'undefined');
         });
     });
@@ -87,7 +93,7 @@ describe('Schema validator middleware', () => {
             value: 150
         }
 
-        return schemaValidator(mocks.req, mocks.res, mocks.next, minMaxSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, minMaxSchema, body, failFunction).then((validationErrors) => {
             assert.notEqual(typeof validationErrors, 'undefined');
         });
     });
@@ -95,7 +101,7 @@ describe('Schema validator middleware', () => {
     it('Should sanitize input', () => {
         body = { name: 'ELON MUSK' };
 
-        return schemaValidator(mocks.req, mocks.res, mocks.next, sanitizedSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, sanitizedSchema, body, failFunction).then((validationErrors) => {
             assert.equal(body.name, 'ksum nole');
         });
     });
@@ -106,7 +112,7 @@ describe('Schema validator middleware', () => {
             resolution: '1080p'
         }
 
-        return schemaValidator(mocks.req, mocks.res, mocks.next, conditionalSchema, body, failFunction).then((validationErrors) => {
+        return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, conditionalSchema, body, failFunction).then((validationErrors) => {
             assert.equal(typeof validationErrors, 'undefined');
         })
     });
