@@ -108,12 +108,12 @@ describe('Schema validator middleware', () => {
 
     it('Should take conditional rules into account', () => {
         body = {
-            type: 'monitor',
-            resolution: '1080p'
+            type: 'monitor'
         }
 
         return schemaValidator.runValidationMiddleware(mock.req, mock.res, mock.next, conditionalSchema, body, failFunction).then((validationErrors) => {
-            assert.equal(typeof validationErrors, 'undefined');
+            assert.equal(validationErrors.length, 1);
+            assert.equal(validationErrors[0].field, 'resolution');
         })
     });
 });

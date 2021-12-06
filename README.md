@@ -239,7 +239,7 @@ const schema = {
 ```
 
 ## Conditional validation
-Some fields can have validation skipped based on conditions. Rules can have a `when` condition that skips the rule in case it returns `false`.
+Fields and rules can have validation skipped based on conditions using `when` function. Validation skips in case it returns `false`.
 
 ```js
 const schema = {
@@ -262,12 +262,12 @@ const schema = {
         ]
     },
     watts: {
+        // Only validate this field when type is 'speaker'
+        when: ({ type }) => type === 'speaker',
         rules: [
             {
                 rule: (input) => !input || input === '',
                 message: 'Power in watts is required',
-                // Only validate this tule when type is 'speaker'
-                when: ({ type }) => type === 'speaker'
             }
         ]
     }
