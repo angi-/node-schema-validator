@@ -28,11 +28,11 @@ module.exports = {
         ]
     },
     watts: {
+        when: ({ type }) => type === productTypes.SPEAKER,
         rules: [
             {
                 rule: (input) => !input || input === '',
-                message: 'Watts is required',
-                when: ({ type }) => type === productTypes.SPEAKER
+                message: 'Watts is required'
             }
         ]
     }

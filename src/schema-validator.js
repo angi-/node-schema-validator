@@ -86,7 +86,10 @@ const processField = async (context, fieldName) => {
     const inputValue = context.targetObject.hasOwnProperty(fieldName) ? context.targetObject[fieldName] : '';
     context.foundError = false;
 
-    if (!isOptionalValidation(context.schema, context.targetObject, fieldName)) {
+    const isOptional = isOptionalValidation(context.schema, context.targetObject, fieldName)
+    const shouldSkip = shouldSkipRuleValidation(context.schema[fieldName], context.targetObject)
+
+    if (!isOptional && !shouldSkip) {
         for (const rule of context.schema[fieldName].rules) {
             await processRule(context, rule, fieldName, inputValue)
         }
@@ -106,7 +109,7 @@ const processField = async (context, fieldName) => {
 class SchemaValidator {
     /**
      * @constructor
-     * @param {Function} failCallback 
+     * @param {Function} failCallback   Function called on failure
      */
     constructor(failCallback) {
         this.failCallback = failCallback || this.defaultFailCallback;
